@@ -18336,7 +18336,13 @@ out:
 }
 
 static int rtl8152_get_coalesce(struct net_device *netdev,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+				struct ethtool_coalesce *coalesce,
+				struct kernel_ethtool_coalesce *_kernel_coalesce,
+				struct netlink_ext_ack *_netlink_ack)
+#else
 				struct ethtool_coalesce *coalesce)
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0) */
 {
 	struct r8152 *tp = netdev_priv(netdev);
 
@@ -18355,7 +18361,13 @@ static int rtl8152_get_coalesce(struct net_device *netdev,
 }
 
 static int rtl8152_set_coalesce(struct net_device *netdev,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+				struct ethtool_coalesce *coalesce,
+				struct kernel_ethtool_coalesce *_kernel_coalesce,
+				struct netlink_ext_ack *_netlink_ack)
+#else
 				struct ethtool_coalesce *coalesce)
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0) */
 {
 	struct r8152 *tp = netdev_priv(netdev);
 	u32 rx_coalesce_nsecs;
