@@ -1,0 +1,16 @@
+Source: realtek-r8152-dkms
+Section: contrib/kernel
+Priority: optional
+Maintainer: Deokgyu Yang <secugyu@gmail.com>
+Build-Depends: debhelper (>=11~), dkms
+Standards-Version: 4.1.4
+Homepage: https://github.com/awesometic/realtek-r8152-dkms
+
+Package: realtek-r8152-dkms
+Architecture: any
+Multi-Arch: foreign
+Depends: dkms (>= 1.95), ${misc:Depends}
+Description: Realtek RTL8152 driver in DKMS format
+  This package provides the Realtek RTL8152 driver in DKMS way so that you can
+  use a Realtek USB-type network interface card using the latest driver.
+  Kernel sources or headers are required to compile this module.

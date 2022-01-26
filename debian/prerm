@@ -1,0 +1,31 @@
+#!/bin/sh
+# Copyright (C) 2022 Deokgyu Yang
+
+set -e
+
+NAME=realtek-r8152
+VERSION=2.15.0
+
+msg() {
+	echo "realtek-r8152-dkms: $@"
+}
+
+case "$1" in
+    remove|upgrade|deconfigure)
+      if [  "`dkms status -m $NAME`" ]; then
+         dkms remove -m $NAME -v $VERSION --all
+      fi
+    ;;
+
+    failed-upgrade)
+    ;;
+
+    *)
+        msg "prerm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+
+
+exit 0

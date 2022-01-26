@@ -1,0 +1,29 @@
+#!/bin/sh
+# Copyright (C) 2022 Deokgyu Yang
+
+set -e
+
+msg() {
+	echo "realtek-r8152-dkms: $@"
+}
+
+case "$1" in
+	purge)
+		rm -f /etc/udev/rules.d/50-usb-realtek-net.rules
+
+		msg "Reload udev..."
+		[ -x "$(command -v udevadm)" ] \
+			&& udevadm trigger \
+			|| msg "udevadm not found. Please reboot to take effect"
+	;;
+
+	remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+	;;
+
+	*)
+		msg "postrm called with unknown argument \`$1'" >&2
+		exit 1
+	;;
+esac
+
+exit 0

@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+
+#just use base version
+VERSION	:= $(shell dpkg-parsechangelog -S Version | sed 's/-.*//' | sed 's/+pristine//')
+
+%:
+	dh $@ --parallel --with dkms
+
+override_dh_install:
+	dh_install dkms.conf REALTEK_README.txt Makefile usr/src/realtek-r8152-$(VERSION)
+	dh_install src/* usr/src/realtek-r8152-$(VERSION)/src
+
+override_dh_dkms:
+	dh_dkms -V $(VERSION)
+
+override_dh_fixperms:
+	dh_fixperms
+	find debian/realtek-r8152-dkms/usr/src -type f -exec chmod -x {} \;
+
+# Nothing to configure, build or auto-install
+override_dh_auto_configure:
+override_dh_auto_build:
+override_dh_auto_test:
+override_dh_auto_install:
+override_dh_auto_clean:
