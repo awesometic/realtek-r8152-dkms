@@ -16,7 +16,7 @@ else
 	PWD :=$(shell pwd)
 	TARGET_PATH := kernel/drivers/net/usb
 	INBOXDRIVER := $(shell find $(subst build,$(TARGET_PATH),$(KERNELDIR)) -name r8152.ko.* -type f)
-	RULEFILE = 50-usb-realtek-net.rules
+	RULEFILE = ../udev/rules.d/50-usb-realtek-net.rules
 	RULEDIR = /etc/udev/rules.d/
 
 .PHONY: modules
