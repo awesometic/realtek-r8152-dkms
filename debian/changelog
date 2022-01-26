@@ -1,0 +1,5 @@
+realtek-r8152-dkms (2.15.0-1) stable; urgency=medium
+
+  * Initial release with Realtek RTL8152 2.15.0 driver
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Wed, 26 Jan 2022 16:41:37 +0900
