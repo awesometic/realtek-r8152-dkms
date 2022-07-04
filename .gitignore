@@ -2,3 +2,5 @@ debian/.debhelper*
 debian/debhelper*
 debian/realtek-r8152-dkms*
 debian/files
+
+.vscode/*
