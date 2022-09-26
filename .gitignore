@@ -4,3 +4,6 @@ debian/realtek-r8152-dkms*
 debian/files
 
 .vscode/*
+
+.DS_Store
+*/**/.DS_Store
