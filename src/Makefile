@@ -33,7 +33,7 @@ clean:
 .PHONY: install
 install:
 ifneq ($(shell lsmod | grep r8153_ecm),)
-    rmmod r8153_ecm
+	rmmod r8153_ecm
 endif
 ifneq ($(shell lsmod | grep r8152),)
 	rmmod r8152
@@ -49,3 +49,4 @@ install_rules:
 	install --group=root --owner=root --mode=0644 $(RULEFILE) $(RULEDIR)
 
 endif
+
