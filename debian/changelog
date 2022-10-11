@@ -1,3 +1,9 @@
+realtek-r8152-dkms (2.16.3-2) stable; urgency=medium
+
+  * Use tar.xz compression type when building Debian package
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Tue, 11 Oct 2022 17:34:50 +0900
+
 realtek-r8152-dkms (2.16.3-1) stable; urgency=medium
 
   * Initial release with Realtek RTL8152 2.16.3 driver
