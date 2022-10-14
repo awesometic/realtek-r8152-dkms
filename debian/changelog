@@ -1,3 +1,9 @@
+realtek-r8152-dkms (2.16.3-3) stable; urgency=medium
+
+  * Fix the not updated version string in Debian prerm script
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Fri, 14 Oct 2022 11:28:20 +0900
+
 realtek-r8152-dkms (2.16.3-2) stable; urgency=medium
 
   * Use tar.xz compression type when building Debian package
