@@ -1038,6 +1038,15 @@ static inline void netif_set_gso_max_size(struct net_device *dev,
 }
 #endif
 
+/* Since Linux kernel 6.1.0, the parameters of netif_napi_add is changed
+ * and there is a new function for setting weight, netif_napi_add_weight
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+#define RTL_NAPI_CONFIG(ndev, napi, function, weight)   netif_napi_add_weight(ndev, napi, function, weight)
+#else
+#define RTL_NAPI_CONFIG(ndev, napi, function, weight)   netif_napi_add(ndev, napi, function, weight)
+#endif
+
 /* Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
  * The RTL chips use a 64 element hash table based on the Ethernet CRC.
  */
@@ -20713,9 +20722,9 @@ static int rtl8152_probe(struct usb_interface *intf,
 	usb_set_intfdata(intf, tp);
 
 	if (tp->support_2500full)
-		netif_napi_add(netdev, &tp->napi, r8152_poll, 256);
+		RTL_NAPI_CONFIG(netdev, &tp->napi, r8152_poll, 256);
 	else
-		netif_napi_add(netdev, &tp->napi, r8152_poll, 64);
+		RTL_NAPI_CONFIG(netdev, &tp->napi, r8152_poll, 64);
 
 	ret = register_netdev(netdev);
 	if (ret != 0) {
