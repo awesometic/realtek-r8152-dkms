@@ -36,7 +36,7 @@ sudo dpkg -i realtek-r8152-dkms*.deb
 > If multiple files selected by the wild card, you should type the specific version of the file.
 >
 > ```bash
-> sudo dpkg -i realtek-r8152-dkms_2.16.3-3_amd64.deb
+> sudo dpkg -i realtek-r8152-dkms_2.16.3-4_amd64.deb
 > ```
 
 If dependency error occurs, try to fix that with `apt` command.
