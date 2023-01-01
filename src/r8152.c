@@ -1026,6 +1026,18 @@ enum tx_csum_stat {
 #define RTL_ADVERTISED_1000_FULL		BIT(5)
 #define RTL_ADVERTISED_2500_FULL		BIT(6)
 
+/* Since Linux kernel 5.18.0, there is no export for netif_set_gso_max_size
+ * function in linux included header files
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
+static inline void netif_set_gso_max_size(struct net_device *dev,
+					  unsigned int size)
+{
+	/* dev->gso_max_size is read locklessly from sk_setup_caps() */
+	WRITE_ONCE(dev->gso_max_size, size);
+}
+#endif
+
 /* Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
  * The RTL chips use a 64 element hash table based on the Ethernet CRC.
  */
