@@ -13,39 +13,55 @@ The RTL8152 driver supports the following USB Ethernet chipsets.
 - **RTL8154 / RTL8154B**: 10/100/1000 MbE (USB 2.0)
 - **RTL8152B**: 10/100M (USB2.0)
 
+<br/>
+
 ## Installation
 
-There are 3 ways to install this DKMS module. Choose one as your tastes.
+1. [Debian Package File](#debian-package-file)
+2. [Launchpad PPA (Recommended)](#launchpad-ppa-recommended)
+3. [autorun.sh](#autorunsh)
+4. [dkms-install.sh](#dkms-installsh)
+5. [Build Debian package yourself](#build-debian-package-yourself)
 
-Those are not interfering with each other. So you can do all 3 methods but absolutely you don't need to.
+There are several ways to install this DKMS module. Choose one as your tastes.
+
+These are not interfering with each other. So you can do all 3 methods but absolutely you don't need to.
 
 Installation using the Debian package is recommended for the sake of getting the newer driver.
 
-### Debian package
+<br/>
 
-#### Released package file
+## Debian package file
 
 Download the latest Debian package from the Release tab on the Github repository.
 
-Then enter the following command.
-
+1. **Install Kernel Headers**  
+Type `uname -r` to see which kernel version you are currently using. Make sure the linux headers for that kernel are installed by using the following command, subsituting your kernel version and arch (usually `amd64` or `arm64`)  
 ```bash
-sudo dpkg -i realtek-r8152-dkms*.deb
+sudo apt install linux-headers-{kernelversion}-{arch}
 ```
+> If using Proxmox, install linux headers with
+> ```bash
+> sudo apt install pve-headers
+> ```
+<br/>
+
+2. **Install package**  
+Then enter the following command to install the `.deb` package and its dependences.  
+```bash
+sudo apt install -f ./realtek-r8152-dkms*.deb
+```
+
 
 > If multiple files selected by the wild card, you should type the specific version of the file.
 >
 > ```bash
-> sudo dpkg -i realtek-r8152-dkms_2.16.3-4_amd64.deb
+> sudo apt install -f ./realtek-r8152-dkms_2.16.3-4_amd64.deb
 > ```
 
-If dependency error occurs, try to fix that with `apt` command.
+<br/>
 
-```bash
-sudo apt install --fix-broken
-```
-
-#### Launchpad PPA (Recommended)
+## Launchpad PPA (Recommended)
 
 Add the Launchpad PPA.
 
@@ -59,7 +75,9 @@ Then install the package using `apt` tool.
 sudo apt install realtek-r8152-dkms
 ```
 
-### autorun.sh
+<br/>
+
+## autorun.sh
 
 Using the `autorun.sh` script that Realtek provides on their original driver package. This is **not installed as a DKMS**, only efforts to the current kernel.
 
@@ -69,7 +87,9 @@ Download or clone this repository and move to the extracted directory, then run 
 sudo ./autorun.sh
 ```
 
-### dkms-install.sh
+<br/>
+
+## dkms-install.sh
 
 This script is from aircrack-ng team. You can install the DKMS module by a simple command.
 
@@ -79,7 +99,9 @@ Download or clone this repository and move to the extracted directory, then run 
 sudo ./dkms-install.sh
 ```
 
-## Debian package build
+<br/>
+
+## Build Debian package yourself
 
 You can build yourself this after installing some dependencies including `dkms`.
 
@@ -91,9 +113,13 @@ sudo apt install devscripts debmake debhelper build-essential dkms
 dpkg-buildpackage -b -rfakeroot -us -uc
 ```
 
+<br/>
+
 ## LICENSE
 
 GPL-2 on Realtek driver and the debian packaing.
+
+<br/>
 
 ## References
 
