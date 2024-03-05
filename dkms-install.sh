@@ -14,8 +14,8 @@ DRV_VERSION=2.17.1
 cp -r ${DRV_DIR} /usr/src/${DRV_NAME}-${DRV_VERSION}
 
 dkms add -m ${DRV_NAME} -v ${DRV_VERSION}
-dkms build -m ${DRV_NAME} -v ${DRV_VERSION}
-dkms install -m ${DRV_NAME} -v ${DRV_VERSION}
+dkms build -m ${DRV_NAME} -v ${DRV_VERSION} --force
+dkms install -m ${DRV_NAME} -v ${DRV_VERSION} --force
 RESULT=$?
 
 echo "Finished running dkms install steps."
