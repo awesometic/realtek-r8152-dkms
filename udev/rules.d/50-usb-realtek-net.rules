@@ -9,7 +9,7 @@ ENV{REALTEK_MODE1}="1"
 ENV{REALTEK_MODE2}="3"
 
 # Realtek
-ATTR{idVendor}=="0bda", ATTR{idProduct}=="815[2,3,5,6]", ATTR{bConfigurationValue}!="$env{REALTEK_MODE1}", ATTR{bConfigurationValue}="$env{REALTEK_MODE1}"
+ATTR{idVendor}=="0bda", ATTR{idProduct}=="815[2,3,5,6,7]", ATTR{bConfigurationValue}!="$env{REALTEK_MODE1}", ATTR{bConfigurationValue}="$env{REALTEK_MODE1}"
 ATTR{idVendor}=="0bda", ATTR{idProduct}=="8053", ATTR{bcdDevice}=="e???", ATTR{bConfigurationValue}!="$env{REALTEK_MODE2}", ATTR{bConfigurationValue}="$env{REALTEK_MODE2}"
 
 # Samsung
@@ -42,5 +42,8 @@ ATTR{idVendor}=="0955", ATTR{idProduct}=="09ff", ATTR{bConfigurationValue}!="$en
 
 # LINKSYS
 ATTR{idVendor}=="13b1", ATTR{idProduct}=="0041", ATTR{bConfigurationValue}!="$env{REALTEK_MODE1}", ATTR{bConfigurationValue}="$env{REALTEK_MODE1}"
+
+# Dell
+ATTR{idVendor}=="413c", ATTR{idProduct}=="b097", ATTR{bConfigurationValue}!="$env{REALTEK_MODE1}", ATTR{bConfigurationValue}="$env{REALTEK_MODE1}"
 
 LABEL="usb_realtek_net_end"
