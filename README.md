@@ -97,4 +97,4 @@ GPL-2 on Realtek driver and the debian packaing.
 
 ## References
 
-- [Realtek r8152 driver release page](https://www.realtek.com/en/component/zoo/category/network-interface-controllers-10-100-1000m-gigabit-ethernet-usb-3-0-software)
+- [Realtek r8152 driver downloads](https://www.realtek.com/Download/List?cate_id=585)
