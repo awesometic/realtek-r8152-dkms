@@ -1,3 +1,9 @@
+realtek-r8152-dkms (2.18.1-1) stable; urgency=medium
+
+  * Update Realtek r8152 driver to 2.18.1
+
+ -- Wenzhuo Zhang <wenzhuo@gmail.com>  Fri, 30 Aug 2024 16:18:52 +0800
+
 realtek-r8152-dkms (2.17.1-3) stable; urgency=medium
 
   * Fix driver version at Debian/DKMS scripts
