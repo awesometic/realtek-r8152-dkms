@@ -835,6 +835,7 @@ enum rtl8152_flags {
 #define VENDOR_ID_LINKSYS		0x13b1
 #define VENDOR_ID_NVIDIA		0x0955
 #define VENDOR_ID_TPLINK		0x2357
+#define VENDOR_ID_DELL                  0x413c
 
 #define MCU_TYPE_PLA			0x0100
 #define MCU_TYPE_USB			0x0000
@@ -25688,6 +25689,9 @@ static const struct usb_device_id rtl8152_table[] = {
 
 	/* ASUSTek */
 	REALTEK_USB_DEVICE(0x0b05, 0x1976),
+
+	/* DELL */
+	REALTEK_USB_DEVICE(VENDOR_ID_DELL, 0xb097),
 
 	{}
 };
