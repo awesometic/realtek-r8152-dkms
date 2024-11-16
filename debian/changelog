@@ -1,3 +1,10 @@
+realtek-r8152-dkms (2.19.2-1) stable; urgency=medium
+
+  * Update Realtek r8152 driver to 2.19.2
+  * Remove deprecated flag REMAKE_INITRD
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Sat, 16 Nov 2024 19:43:04 +0900
+
 realtek-r8152-dkms (2.18.1-1) stable; urgency=medium
 
   * Update Realtek r8152 driver to 2.18.1
