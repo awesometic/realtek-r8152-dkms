@@ -21,14 +21,8 @@
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0) */
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31) */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,4,10)
-#if defined __has_include
-#if __has_include (<net/gso.h>)
-#include <net/gso.h>
-#endif
-#endif
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERISON(6,4,10) */
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0)
+	#define ethtool_keee ethtool_eee
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,19,0)
 	#define TSO_LEGACY_MAX_SIZE		65536
 	#define netif_napi_add_weight		netif_napi_add
@@ -645,6 +639,7 @@
 	}
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(5,17,0) */
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(5,19,0) */
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0) */
 
 #ifndef FALSE
 	#define TRUE	1
