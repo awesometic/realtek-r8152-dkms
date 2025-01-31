@@ -1,4 +1,4 @@
-# Realtek r8152 DKMS
+# Realtek r8152 DKMS / DELL ALIENWARE AW1022 support
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/awesometic/realtek-r8152-dkms?sort=semver&style=for-the-badge)
 
@@ -19,6 +19,20 @@ RTL8156 /B       | USB 3.0     | 2.5 GbE
 RTL8153 /B/C/D/E | USB 3.0     | 10/100/1000 MbE
 RTL8154 /B       | USB 2.0     | 10/100/1000 MbE
 RTL8152B         | USB 2.0     | 10/100M
+
+Based on REALTEK USB NIC Linux driver for kernel up to 6.10
+Version: 2.19.2 (2024/11/05)
+<https://www.realtek.com/Download/List?cate_id=585>
+<https://www.realtek.com/Download/ToDownload?type=direct&downloadid=3375>
+
+### Add support for .ko.zst kernel modules in newer Ubuntu versions
+This version enhances the project to ensure compatibility with newer Ubuntu versions (or similar other Linux distributions) that use .ko.zst (Zstandard compressed) kernel modules. The logic has been updated to correctly handle .ko.zst files, which are now standard in Ubuntu versions 21.10 and later. This improves functionality on modern systems.
+
+### Add support for Network interface Dell Alienware AW1022 2.5Gb USB NIC (device ID 413C:B097)
+Dell Alienware AW1022 2.5Gb USB NIC Support: Added driver support for the Dell Alienware AW1022 2.5Gb USB Network Interface Card, enabling proper detection and functionality of this NIC on supported systems.
+
+### Fixed udev rules handling ###
+Resolved an issue where the script could not locate the udev rules file when switching to the src subdirectory, resulting in an error. The handling of the udev rules file has been corrected, and the necessary entry for the Dell Alienware AW1022 NIC has been added to the udev rules as well.
 
 ## Installation
 
