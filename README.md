@@ -22,8 +22,6 @@ RTL8152B         | USB 2.0     | 10/100M
 
 Based on REALTEK USB NIC Linux driver for kernel up to 6.10
 Version: 2.19.2 (2024/11/05)
-<https://www.realtek.com/Download/List?cate_id=585>
-<https://www.realtek.com/Download/ToDownload?type=direct&downloadid=3375>
 
 ### Add support for .ko.zst kernel modules in newer Ubuntu versions
 This version enhances the project to ensure compatibility with newer Ubuntu versions (or similar other Linux distributions) that use .ko.zst (Zstandard compressed) kernel modules. The logic has been updated to correctly handle .ko.zst files, which are now standard in Ubuntu versions 21.10 and later. This improves functionality on modern systems.
@@ -41,44 +39,6 @@ There are 3 ways to install this DKMS module. Choose one as your tastes.
 Those are not interfering with each other. So you can do all 3 methods but absolutely you don't need to.
 
 Installation using the Debian package is recommended for the sake of getting the newer driver.
-
-### Debian package
-
-#### Released package file
-
-Download the latest Debian package from the Release tab on the Github repository.
-
-Then enter the following command.
-
-```bash
-sudo dpkg -i realtek-r8152-dkms-2.19.2-1*.deb
-```
-
-> If multiple files selected by the wild card, you should type the specific version of the file.
->
-> ```bash
-> sudo dpkg -i realtek-r8152-dkms*.deb
-> ```
-
-If dependency error occurs, try to fix that with `apt` command.
-
-```bash
-sudo apt install --fix-broken
-```
-
-#### Launchpad PPA (Recommended)
-
-Add the Launchpad PPA.
-
-```bash
-sudo add-apt-repository ppa:awesometic/ppa
-```
-
-Then install the package using `apt` tool.
-
-```bash
-sudo apt install realtek-r8152-dkms
-```
 
 ### autorun.sh
 
@@ -112,10 +72,35 @@ sudo apt install devscripts debmake debhelper build-essential dkms dh-dkms
 dpkg-buildpackage -b -rfakeroot -us -uc
 ```
 
+### Debian package
+
+#### Released package file
+
+Download the latest Debian package from the Release tab on the Github repository.
+
+Then enter the following command.
+
+```bash
+sudo dpkg -i realtek-r8152-dkms-2.19.2-1*.deb
+```
+
+> If multiple files selected by the wild card, you should type the specific version of the file.
+>
+> ```bash
+> sudo dpkg -i realtek-r8152-dkms*.deb
+> ```
+
+If dependency error occurs, try to fix that with `apt` command.
+
+```bash
+sudo apt install --fix-broken
+```
+
 ## LICENSE
 
-GPL-2 on Realtek driver and the debian packaing.
+GPL-2 on Realtek driver and the debian packaging.
 
 ## References
 
-- [Realtek r8152 driver downloads](https://www.realtek.com/Download/List?cate_id=585)
+[1] [Realtek r8152 driver download](https://www.realtek.com/Download/List?cate_id=585)
+[2] [Realtek r8152 direct download link(https://www.realtek.com/Download/ToDownload?type=direct&downloadid=3375)
