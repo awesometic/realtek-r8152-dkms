@@ -103,4 +103,5 @@ GPL-2 on Realtek driver and the debian packaging.
 ## References
 
 [1] [Realtek r8152 driver download](https://www.realtek.com/Download/List?cate_id=585)
+
 [2] [Realtek r8152 direct download link(https://www.realtek.com/Download/ToDownload?type=direct&downloadid=3375)
