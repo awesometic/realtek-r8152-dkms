@@ -1,7 +1,5 @@
 # Realtek r8152 DKMS / DELL ALIENWARE AW1022 support
 
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/awesometic/realtek-r8152-dkms?sort=semver&style=for-the-badge)
-
 This provides Realtek r8152 driver in DKMS way so that you can keep the latest driver even after the kernel upgrade.
 
 ### Changes and Optimizations - Version: 2.19.3 (2025/04/17)
