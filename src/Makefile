@@ -20,13 +20,17 @@ ifneq ($(KERNELRELEASE),)
 		EXTRA_CFLAGS += -DLINUX_VERSION_SUBLEVEL=$(SUBLEVEL)
 	endif
 else
-	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+
+ifeq ($(KERNELRELEASE),)
+	KERNELRELEASE := $(shell ls -d /lib/modules/*/ | sort -V | tail -n 1 | xargs basename)
+endif
+	KERNELDIR ?= /lib/modules/$(KERNELRELEASE)/build
 	PWD :=$(shell pwd)
-	TARGET_PATH := kernel/drivers/net/usb
+	TARGET_PATH := updates/dkms
 	INBOXDRIVER := $(shell find $(subst build,$(TARGET_PATH),$(KERNELDIR)) -name r8152.ko.* -type f)
 	RULEFILE = ../udev/rules.d/50-usb-realtek-net.rules
 	RULEDIR = /etc/udev/rules.d/
-	MODFILE := /lib/modules/$(shell uname -r)/kernel/drivers/net/usb/r8152.ko
+	MODFILE := /lib/modules/$(KERNELRELEASE)/updates/dkms/r8152.ko
 
 .PHONY: modules
 modules:

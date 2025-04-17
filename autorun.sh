@@ -4,11 +4,12 @@
 # invoke insmod with all arguments we got
 # and use a pathname, as insmod doesn't look in . by default
 
-TARGET_PATH=$(find /lib/modules/$(uname -r)/kernel/drivers/net/usb -type d)
+TARGET_PATH=$(find /lib/modules/$(uname -r)/updates/dkms -type d)
 if [ "$TARGET_PATH" = "" ]; then
-	TARGET_PATH=/lib/modules/$(uname -r)/kernel/drivers/net
+	TARGET_PATH=/lib/modules/$(uname -r)/kernel/drivers/net/usb
 fi
 echo
+echo "TARGET_PATH = $TARGET_PATH"
 check=`lsmod | grep r8152`
 if [ "$check" != "" ]; then
         echo "modprobe -r r8152"

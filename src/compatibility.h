@@ -15,14 +15,25 @@
 #endif /* defined(RTL8152_S5_WOL) && defined(CONFIG_PM) */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
-	#include <linux/mdio.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
-	#include <uapi/linux/mdio.h>
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0) */
+    #include <linux/mdio.h>
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
+        #include <uapi/linux/mdio.h>
+    #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0) */
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0)
-	#define ethtool_keee ethtool_eee
+    #define ethtool_keee ethtool_eee
+
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,4,10)
+        #if defined __has_include
+            #if __has_include (<net/gso.h>)
+                #include <net/gso.h>
+            #endif
+        #endif
+    #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(6,4,10) */
+
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,19,0)
 	#define TSO_LEGACY_MAX_SIZE		65536
 	#define netif_napi_add_weight		netif_napi_add
