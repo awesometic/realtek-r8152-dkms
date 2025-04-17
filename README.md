@@ -4,6 +4,22 @@
 
 This provides Realtek r8152 driver in DKMS way so that you can keep the latest driver even after the kernel upgrade.
 
+### Changes and Optimizations - Version: 2.19.3 (2025/04/17)
+
+- **Kernel Compatibility Improvements:**
+  - Updated `src/compatibility.h` to better handle different kernel versions, ensuring compatibility with recent kernel releases and enabling smooth module integration across a range of versions.
+  - Added conditional inclusion of headers for improved compatibility with kernel version `6.4.10` and newer, specifically related to the use of the `gso.h` header.
+
+- **DKMS and Kernel Handling Adjustments:**
+  - Modified `src/Makefile` to dynamically set the correct `KERNELRELEASE` value during the build process, ensuring that the module is built for the intended, newly installed kernel instead of the currently running kernel.
+  - The DKMS configuration was updated to ensure that the module is properly built and installed when new kernel versions are triggered by DKMS.
+
+- **Improved Module Installation Process:**
+  - Enhanced `autorun.sh` and `dkms.conf` to streamline the installation of kernel modules, with automatic version checks and kernel-specific optimizations for module handling.
+  - Updated rules for automatic installation of `r8152.ko` to ensure the proper integration of the Realtek network driver under various kernel environments.
+
+These updates optimize the module build and installation process, enhancing compatibility across kernel versions and improving the overall user experience for DKMS-based kernel module management.
+
 ## Compatibility
 
 Based on REALTEK USB NIC Linux driver for kernel up to 6.10
