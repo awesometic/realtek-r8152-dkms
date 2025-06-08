@@ -11,14 +11,16 @@ The r8152 driver supports the following USB Ethernet chipsets.
 > Refers to the official websites, you can check it at the bottom of this document
 >
 > *For RTL8157 (5 GbE), you need 2.18.1 or above*
+> *For RTL8159 (10 GbE), you need 2.20.1 or above*
 
-Chipset          | Interface   | Performance
-:----------------|:-----------:|:----------------:
-RTL8157          | USB 3.0     | 5 GbE
-RTL8156 /B       | USB 3.0     | 2.5 GbE
-RTL8153 /B/C/D/E | USB 3.0     | 10/100/1000 MbE
-RTL8154 /B       | USB 2.0     | 10/100/1000 MbE
-RTL8152B         | USB 2.0     | 10/100M
+Chipset          | Interface       | Performance
+:----------------|:---------------:|:----------------:
+RTL8159          | USB 3.2 Gen 2x2 | 10 GbE
+RTL8157          | USB 3.2         | 5 GbE
+RTL8156 /B       | USB 3.0         | 2.5 GbE
+RTL8153 /B/C/D/E | USB 3.0         | 10/100/1000 MbE
+RTL8154 /B       | USB 2.0         | 10/100/1000 MbE
+RTL8152B         | USB 2.0         | 10/100M
 
 ## Installation
 
@@ -37,7 +39,7 @@ Download the latest Debian package from the Release tab on the Github repository
 Then enter the following command.
 
 ```bash
-sudo dpkg -i realtek-r8152-dkms-2.19.2-1*.deb
+sudo dpkg -i realtek-r8152-dkms-2.20.1-1*.deb
 ```
 
 > If multiple files selected by the wild card, you should type the specific version of the file.
