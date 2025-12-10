@@ -1,3 +1,10 @@
+realtek-r8152-dkms (2.21.4-1) stable; urgency=medium
+
+  * Update Realtek r8152 driver to 2.21.4
+  * Allow compilation for non-booted kernels and fix typo
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Tue, 09 Dec 2025 16:40:21 +0900
+
 realtek-r8152-dkms (2.20.1-1) stable; urgency=medium
 
   * Update Realtek r8152 driver to 2.20.1
