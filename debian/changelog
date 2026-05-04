@@ -1,3 +1,9 @@
+realtek-r8152-dkms (2.21.4-2) stable; urgency=medium
+
+  * Fix compatibility with kernel 7.0
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Mon, 04 May 2026 17:49:41 +0900
+
 realtek-r8152-dkms (2.21.4-1) stable; urgency=medium
 
   * Update Realtek r8152 driver to 2.21.4
