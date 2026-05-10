@@ -11,8 +11,8 @@ fi
 echo
 check=`lsmod | grep r8152`
 if [ "$check" != "" ]; then
-        echo "rmmod r8152"
-        /sbin/rmmod r8152
+        echo "modprobe -r r8152"
+	/usr/sbin/modprobe -r r8152
 fi
 
 echo "Build the module and install"
