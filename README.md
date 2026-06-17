@@ -39,7 +39,7 @@ Download the latest Debian package from the Release tab on the Github repository
 Then enter the following command.
 
 ```bash
-sudo dpkg -i realtek-r8152-dkms-2.21.4-1*.deb
+sudo dpkg -i realtek-r8152-dkms-2.22.1-1*.deb
 ```
 
 > If multiple files selected by the wild card, you should type the specific version of the file.
