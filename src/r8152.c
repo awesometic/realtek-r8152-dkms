@@ -43,7 +43,13 @@
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0) */
 
 /* Version Information */
+/* Overridable from the build (make DRIVER_SUFFIX=+local1) so a patched build
+ * is distinguishable from stock in modinfo, ethtool -i and
+ * /sys/module/r8152/version, not only by srcversion.
+ */
+#ifndef DRIVER_SUFFIX
 #define DRIVER_SUFFIX
+#endif
 #define DRIVER_VERSION "v2.22.1"DRIVER_SUFFIX" (2026/06/03)"
 #define DRIVER_AUTHOR "Realtek nic sw <nic_swsd@realtek.com>"
 #define DRIVER_DESC "Realtek RTL8152/RTL8153 Based USB Ethernet Adapters"
@@ -1005,8 +1011,11 @@ struct r8152 {
 	struct sk_buff_head tx_queue, rx_queue;
 	spinlock_t rx_lock, tx_lock;
 	struct delayed_work schedule, hw_phy_work;
+	struct delayed_work tally_work;
 	struct mii_if_info mii;
 	struct mutex control;	/* use for hw setting */
+	u16 tally_rx_missed;	/* last raw 16-bit hw value, for delta folding */
+	bool tally_valid;	/* tally_rx_missed holds a usable previous sample */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
 	struct vlan_group *vlgrp;
 #endif
@@ -12948,6 +12957,107 @@ static inline void __rtl_hw_phy_work_func(struct r8152 *tp)
 	usb_autopm_put_interface(tp->intf);
 }
 
+/* Interval at which the hardware tally counters are refreshed into
+ * netdev->stats. The RTL8159's rx_missed is a free-running 16-bit counter
+ * that can wrap in under a minute under sustained 10G receive loss
+ * (measured on an RTL8159: ~1,186 frames/s, i.e. a wrap every ~55 s), so
+ * the poll has to be fast enough that a single wrap cannot be missed.
+ */
+#define RTL8152_TALLY_INTERVAL	(5 * HZ)
+
+/* Refresh netdev->stats from the hardware tally counters.
+ *
+ * Reading the tally is a USB control transfer that sleeps, so this must run
+ * from process context (a workqueue) and never from the ->get_stats path,
+ * which may be called with locks held.
+ *
+ * Without this, rx_missed is reachable only through ethtool's private stats
+ * and every collector that reads the standard sysfs statistics sees 0 -
+ * on this chip that is the counter for its defining failure mode, the USB
+ * receive path dropping frames it cannot absorb.
+ */
+static void rtl_tally_update(struct r8152 *tp)
+{
+	struct net_device_stats *stats = rtl8152_get_stats(tp->netdev);
+	struct tally_counter tally;
+	u16 rx_missed;
+	int ret;
+
+	if (usb_autopm_get_interface(tp->intf) < 0)
+		return;
+
+	if (mutex_lock_interruptible(&tp->control) < 0) {
+		usb_autopm_put_interface(tp->intf);
+		return;
+	}
+
+	ret = generic_ocp_read(tp, PLA_TALLYCNT, sizeof(tally), &tally,
+			       MCU_TYPE_PLA);
+
+	mutex_unlock(&tp->control);
+
+	usb_autopm_put_interface(tp->intf);
+
+	if (ret < 0)
+		return;
+
+	rx_missed = le16_to_cpu(tally.rx_missed);
+
+	/* rx_missed_errors is unsigned long and every consumer of it expects a
+	 * monotonic counter, so accumulate the unsigned 16-bit delta rather
+	 * than copying the raw value. The cast folds a single wrap correctly;
+	 * the interval above is what keeps a delta below 65536.
+	 */
+	if (tp->tally_valid)
+		stats->rx_missed_errors += (u16)(rx_missed - tp->tally_rx_missed);
+
+	tp->tally_rx_missed = rx_missed;
+	tp->tally_valid = true;
+
+	/* rx_errors has no writer in the receive path, so the hardware value
+	 * is authoritative and can be assigned.
+	 *
+	 * tx_errors is deliberately NOT taken from the tally: the transmit
+	 * completion path already accumulates it, and adding the hardware
+	 * counter on top would double-count.
+	 */
+	stats->rx_errors = le32_to_cpu(tally.rx_errors);
+}
+
+/* (Re-)arm the tally poll. Called from every path that enables work:
+ * open, post_reset, and both resume paths. tally_valid is cleared
+ * because the device may have been reset or powered down in between, so
+ * the previous sample is not a valid base for a delta.
+ */
+static void rtl_tally_arm(struct r8152 *tp)
+{
+	tp->tally_valid = false;
+	schedule_delayed_work(&tp->tally_work, RTL8152_TALLY_INTERVAL);
+}
+
+static inline void __rtl_tally_work_func(struct r8152 *tp)
+{
+	if (test_bit(RTL8152_UNPLUG, &tp->flags) || !netif_running(tp->netdev))
+		return;
+
+	if (!test_bit(WORK_ENABLE, &tp->flags))
+		return;
+
+	/* Runtime suspend leaves WORK_ENABLE set, so without this the poll
+	 * would call usb_autopm_get_interface() every interval and wake the
+	 * device, defeating autosuspend entirely. A suspended device is not
+	 * receiving, so there is nothing to miss: skip the read but keep the
+	 * work armed so it resumes on its own.
+	 */
+	if (!test_bit(SELECTIVE_SUSPEND, &tp->flags))
+		rtl_tally_update(tp);
+
+	if (!test_bit(RTL8152_UNPLUG, &tp->flags) &&
+	    test_bit(WORK_ENABLE, &tp->flags))
+		schedule_delayed_work(&tp->tally_work,
+				      RTL8152_TALLY_INTERVAL);
+}
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
 
 static void rtl_work_func_t(void *data)
@@ -12964,6 +13074,13 @@ static void rtl_hw_phy_work_func_t(void *data)
 	__rtl_hw_phy_work_func(tp);
 }
 
+static void rtl_tally_work_func_t(void *data)
+{
+	struct r8152 *tp = (struct r8152 *)data;
+
+	__rtl_tally_work_func(tp);
+}
+
 #else
 
 static void rtl_work_func_t(struct work_struct *work)
@@ -12978,6 +13095,13 @@ static void rtl_hw_phy_work_func_t(struct work_struct *work)
 	struct r8152 *tp = container_of(work, struct r8152, hw_phy_work.work);
 
 	__rtl_hw_phy_work_func(tp);
+}
+
+static void rtl_tally_work_func_t(struct work_struct *work)
+{
+	struct r8152 *tp = container_of(work, struct r8152, tally_work.work);
+
+	__rtl_tally_work_func(tp);
 }
 
 #endif
@@ -13179,6 +13303,12 @@ static int rtl8152_open(struct net_device *netdev)
 	mutex_unlock(&tp->control);
 
 	usb_autopm_put_interface(tp->intf);
+
+	/* Start refreshing the hardware tally into netdev->stats. The first
+	 * run only establishes the delta baseline; counting starts from the
+	 * second.
+	 */
+	rtl_tally_arm(tp);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23) && defined(CONFIG_PM_SLEEP)
 	tp->pm_notifier.notifier_call = rtl_notifier;
 	register_pm_notifier(&tp->pm_notifier);
@@ -13217,6 +13347,7 @@ static int rtl8152_close(struct net_device *netdev)
 	smp_mb__after_atomic();
 	usb_kill_urb(tp->intr_urb);
 	cancel_delayed_work_sync(&tp->schedule);
+	cancel_delayed_work_sync(&tp->tally_work);
 	napi_disable(&tp->napi);
 	netif_stop_queue(netdev);
 
@@ -13260,6 +13391,12 @@ static int rtl8152_close(struct net_device *netdev)
 
 static int rtl_tally_reset(struct r8152 *tp)
 {
+	/* The hardware counters go back to 0, so the previous sample is no
+	 * longer a valid base for a delta - otherwise the reset would read
+	 * as one enormous wrap.
+	 */
+	tp->tally_valid = false;
+
 	return ocp_word_set_bits(tp, MCU_TYPE_PLA, PLA_RSTTALLY, TALLY_RESET);
 }
 
@@ -31027,6 +31164,7 @@ static int rtl8152_pre_reset(struct usb_interface *intf)
 	smp_mb__after_atomic();
 	usb_kill_urb(tp->intr_urb);
 	cancel_delayed_work_sync(&tp->schedule);
+	cancel_delayed_work_sync(&tp->tally_work);
 	napi_disable(&tp->napi);
 	if (netif_carrier_ok(netdev)) {
 		mutex_lock(&tp->control);
@@ -31077,6 +31215,7 @@ static int rtl8152_post_reset(struct usb_interface *intf)
 	napi_enable(&tp->napi);
 	tasklet_enable(&tp->tx_tl);
 	netif_wake_queue(netdev);
+	rtl_tally_arm(tp);
 	usb_submit_urb(tp->intr_urb, GFP_KERNEL);
 
 	if (!list_empty(&tp->rx_done))
@@ -31120,6 +31259,7 @@ static int rtl8152_runtime_resume(struct r8152 *tp)
 		smp_mb__before_atomic();
 		set_bit(WORK_ENABLE, &tp->flags);
 		smp_mb__after_atomic();
+		rtl_tally_arm(tp);
 
 		if (netif_carrier_ok(netdev)) {
 			if (rtl8152_get_speed(tp) & LINK_STATUS) {
@@ -31163,6 +31303,7 @@ static int rtl8152_system_resume(struct r8152 *tp)
 		smp_mb__before_atomic();
 		set_bit(WORK_ENABLE, &tp->flags);
 		smp_mb__after_atomic();
+		rtl_tally_arm(tp);
 		if (test_and_clear_bit(RECOVER_SPEED, &tp->flags))
 			rtl8152_set_speed(tp, tp->autoneg, tp->speed,
 					  tp->duplex, tp->advertising);
@@ -31260,6 +31401,7 @@ static int rtl8152_system_suspend(struct r8152 *tp, pm_message_t message)
 		tasklet_disable(&tp->tx_tl);
 		napi_disable(napi);
 		cancel_delayed_work_sync(&tp->schedule);
+		cancel_delayed_work_sync(&tp->tally_work);
 		tp->rtl_ops.down(tp);
 
 		if (!(message.event & PM_EVENT_FREEZE)) {
@@ -34511,6 +34653,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 	mutex_init(&tp->control);
 	INIT_DELAYED_WORK(&tp->schedule, rtl_work_func_t);
 	INIT_DELAYED_WORK(&tp->hw_phy_work, rtl_hw_phy_work_func_t);
+	INIT_DELAYED_WORK(&tp->tally_work, rtl_tally_work_func_t);
 	tasklet_setup(&tp->tx_tl, bottom_half);
 	tasklet_disable(&tp->tx_tl);
 
@@ -34741,6 +34884,7 @@ static void rtl8152_disconnect(struct usb_interface *intf)
 		netif_napi_del(&tp->napi);
 		tasklet_kill(&tp->tx_tl);
 		cancel_delayed_work_sync(&tp->hw_phy_work);
+		cancel_delayed_work_sync(&tp->tally_work);
 		if (tp->rtl_ops.unload)
 			tp->rtl_ops.unload(tp);
 		free_netdev(netdev);

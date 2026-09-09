@@ -13,6 +13,12 @@ ifneq ($(KERNELRELEASE),)
 		ccflags-y += -DCONFIG_CTAP_SHORT_OFF
 	endif
 
+# make DRIVER_SUFFIX=+local1 tags the version string in modinfo, ethtool -i and
+# /sys/module/r8152/version so a locally patched build is discoverable.
+	ifneq (,$(DRIVER_SUFFIX))
+		ccflags-y += -DDRIVER_SUFFIX='"$(DRIVER_SUFFIX)"'
+	endif
+
 	ifeq (TRUE, $(shell test $(VERSION) -lt 5 && echo "TRUE" || \
 		test $(VERSION) -eq 5 && test $(PATCHLEVEL) -lt 12 && echo "TRUE"))
 		ccflags-y += -DLINUX_VERSION_MAJOR=$(VERSION)
