@@ -43,7 +43,13 @@
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0) */
 
 /* Version Information */
+/* Overridable from the build (make DRIVER_SUFFIX=+local1) so a patched build
+ * is distinguishable from stock in modinfo, ethtool -i and
+ * /sys/module/r8152/version, not only by srcversion.
+ */
+#ifndef DRIVER_SUFFIX
 #define DRIVER_SUFFIX
+#endif
 #define DRIVER_VERSION "v2.22.1"DRIVER_SUFFIX" (2026/06/03)"
 #define DRIVER_AUTHOR "Realtek nic sw <nic_swsd@realtek.com>"
 #define DRIVER_DESC "Realtek RTL8152/RTL8153 Based USB Ethernet Adapters"
