@@ -1,0 +1,146 @@
+name: Draft release
+
+"on":
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PACKAGE_NAME: realtek-r8152-dkms
+  VERSION_SOURCE: src/r8152.c
+  VERSION_MACRO: DRIVER_VERSION
+
+concurrency:
+  group: draft-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test version consistency
+    runs-on: ubuntu-24.04
+    outputs:
+      driver_version: ${{ steps.version.outputs.driver_version }}
+      package_version: ${{ steps.version.outputs.package_version }}
+      upstream_version: ${{ steps.version.outputs.upstream_version }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify version references
+        id: version
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$1"
+            exit 1
+          }
+
+          driver_versions="$(sed -nE "s/^[[:space:]]*#define[[:space:]]+${VERSION_MACRO}[[:space:]]+\"([^\"]+)\".*$/\1/p" "$VERSION_SOURCE")"
+          driver_version_count="$(printf '%s\n' "$driver_versions" | sed '/^$/d' | wc -l)"
+          [ "$driver_version_count" -eq 1 ] || fail "Expected exactly one $VERSION_MACRO definition in $VERSION_SOURCE, found $driver_version_count."
+          driver_version="${driver_versions#v}"
+
+          check_single_version() {
+            local label="$1"
+            local values="$2"
+            local expected="$3"
+            local count
+            count="$(printf '%s\n' "$values" | sed '/^$/d' | wc -l)"
+
+            [ "$count" -eq 1 ] || fail "Expected exactly one $label version reference, found $count."
+            [ "$values" = "$expected" ] || fail "$label version ($values) does not match driver version ($expected)."
+          }
+
+          package_version="$(dpkg-parsechangelog -S Version)"
+          upstream_version="${package_version%%-*}"
+          upstream_version="${upstream_version#*:}"
+          [ -n "$package_version" ] || fail "Could not read package version from debian/changelog."
+          [ -n "$upstream_version" ] || fail "Could not derive upstream version from package version '$package_version'."
+          [ "$driver_version" = "$upstream_version" ] || fail "Driver version ($driver_version) does not match changelog upstream version ($upstream_version)."
+
+          dkms_versions="$(sed -nE 's/^PACKAGE_VERSION="([^"]+)".*$/\1/p' dkms.conf)"
+          check_single_version "dkms.conf PACKAGE_VERSION" "$dkms_versions" "$driver_version"
+
+          install_versions="$(sed -nE 's/^DRV_VERSION=([^[:space:]]+).*$/\1/p' dkms-install.sh)"
+          check_single_version "dkms-install.sh DRV_VERSION" "$install_versions" "$driver_version"
+
+          remove_versions="$(sed -nE 's/^DRV_VERSION=([^[:space:]]+).*$/\1/p' dkms-remove.sh)"
+          check_single_version "dkms-remove.sh DRV_VERSION" "$remove_versions" "$driver_version"
+
+          prerm_versions="$(sed -nE 's/^VERSION=([^[:space:]]+).*$/\1/p' debian/prerm)"
+          check_single_version "debian/prerm VERSION" "$prerm_versions" "$driver_version"
+
+          readme_package_versions="$(sed -nE "s/.*${PACKAGE_NAME}_([^_]+)_.*\.deb.*/\1/p" README.md)"
+          readme_version_count="$(printf '%s\n' "$readme_package_versions" | sed '/^$/d' | wc -l)"
+          [ "$readme_version_count" -ge 1 ] || fail "Expected at least one README.md Debian package version reference."
+          while IFS= read -r readme_package_version; do
+            [ -n "$readme_package_version" ] || continue
+            [ "$readme_package_version" = "$package_version" ] || fail "README.md package example version ($readme_package_version) does not match changelog package version ($package_version)."
+          done <<< "$readme_package_versions"
+
+          if git rev-parse --quiet --verify "refs/tags/$package_version" >/dev/null; then
+            fail "Tag '$package_version' already exists. Bump debian/changelog before merging to master."
+          fi
+
+          {
+            echo "driver_version=$driver_version"
+            echo "package_version=$package_version"
+            echo "upstream_version=$upstream_version"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Driver version: $driver_version"
+          echo "Package version: $package_version"
+
+  release:
+    name: Build package and draft release
+    runs-on: ubuntu-24.04
+    needs: test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential \
+            debhelper \
+            devscripts \
+            dh-dkms \
+            dkms \
+            fakeroot
+
+      - name: Build Debian package
+        run: dpkg-buildpackage -b -rfakeroot -us -uc
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_VERSION: ${{ needs.test.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          deb_packages=(../"${PACKAGE_NAME}"_"$PACKAGE_VERSION"_*.deb)
+          [ "${#deb_packages[@]}" -eq 1 ] || {
+            echo "::error::Expected exactly one Debian package asset for version $PACKAGE_VERSION, found ${#deb_packages[@]}."
+            exit 1
+          }
+
+          assets=("${deb_packages[@]}" ../*.buildinfo ../*.changes)
+
+          gh release create "$PACKAGE_VERSION" "${assets[@]}" \
+            --draft \
+            --generate-notes \
+            --target "$GITHUB_SHA"
