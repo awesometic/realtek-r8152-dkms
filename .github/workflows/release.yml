@@ -99,10 +99,17 @@ jobs:
           echo "Driver version: $driver_version"
           echo "Package version: $package_version"
 
-  release:
-    name: Build package and draft release
-    runs-on: ubuntu-24.04
+  build:
+    name: Build package (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     needs: test
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
 
     steps:
       - name: Check out repository
@@ -124,6 +131,32 @@ jobs:
       - name: Build Debian package
         run: dpkg-buildpackage -b -rfakeroot -us -uc
 
+      - name: Upload Debian package artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: debian-package-${{ matrix.arch }}
+          path: |
+            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.deb
+            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.buildinfo
+            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.changes
+          if-no-files-found: error
+
+  release:
+    name: Create draft release
+    runs-on: ubuntu-24.04
+    needs: [test, build]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Download Debian package artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: debian-package-*
+          path: dist
+          merge-multiple: true
+
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -131,14 +164,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          shopt -s nullglob
-          deb_packages=(../"${PACKAGE_NAME}"_"$PACKAGE_VERSION"_*.deb)
-          [ "${#deb_packages[@]}" -eq 1 ] || {
-            echo "::error::Expected exactly one Debian package asset for version $PACKAGE_VERSION, found ${#deb_packages[@]}."
-            exit 1
-          }
-
-          assets=("${deb_packages[@]}" ../*.buildinfo ../*.changes)
+          assets=()
+          for arch in amd64 arm64; do
+            for extension in deb buildinfo changes; do
+              asset="dist/${PACKAGE_NAME}_${PACKAGE_VERSION}_${arch}.${extension}"
+              [ -f "$asset" ] || {
+                echo "::error::Missing release asset: $asset"
+                exit 1
+              }
+              assets+=("$asset")
+            done
+          done
 
           gh release create "$PACKAGE_VERSION" "${assets[@]}" \
             --draft \
