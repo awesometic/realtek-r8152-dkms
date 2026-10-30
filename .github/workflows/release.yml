@@ -129,16 +129,20 @@ jobs:
             fakeroot
 
       - name: Build Debian package
-        run: dpkg-buildpackage -b -rfakeroot -us -uc
+        env:
+          PACKAGE_VERSION: ${{ needs.test.outputs.package_version }}
+          PACKAGE_ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          dpkg-buildpackage -b -rfakeroot -us -uc
+          mkdir -p dist
+          mv ../"${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}".{deb,buildinfo,changes} dist/
 
       - name: Upload Debian package artifacts
         uses: actions/upload-artifact@v7
         with:
           name: debian-package-${{ matrix.arch }}
-          path: |
-            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.deb
-            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.buildinfo
-            ../${{ env.PACKAGE_NAME }}_${{ needs.test.outputs.package_version }}_${{ matrix.arch }}.changes
+          path: dist/
           if-no-files-found: error
 
   release:
